@@ -8,55 +8,24 @@ public class Main {
     public static void main(String[] args) throws Exception {
         License.iConfirmNonCommercialUse("Gosha Rassokhin");
 
-        Function carrier = new Function("carrier(t) = sin(t)");
-        Argument periodC = new Argument("periodC = 2 * pi");
-        Argument fc = new Argument("fc = 200");
-
-        double[] extremaC = extrema(carrier, 120, periodC.getArgumentValue());
-        Argument maxC = new Argument("maxC");
-        Argument minC = new Argument("minC");
-
-        maxC.setArgumentValue(extremaC[0]);
-        minC.setArgumentValue(extremaC[1]);
-
-        Function carrier2 = new Function("carrier2(t) = 2 * ((carrier(mod(periodC * t, periodC)) - minC)/(maxC - minC)) - 1");
-        carrier2.addArguments(periodC, minC, maxC);
-        carrier2.addFunctions(carrier);
-
-        Function modulator = new Function("modulator(t) = sin(t)");
-        Argument periodM = new Argument("periodM = 2 * pi");
-        Argument fm = new Argument("fm = 220");
-
-        double[] extremaM = extrema(modulator, 120, periodM.getArgumentValue());
-        Argument maxM = new Argument("maxM");
-        Argument minM = new Argument("minM");
-
-        maxM.setArgumentValue(extremaM[0]);
-        minM.setArgumentValue(extremaM[1]);
-
-        Function modulator2 = new Function("modulator2(t) = 2 * ((modulator(mod(periodM * t, periodM)) - minM)/(maxM - minM)) - 1");
-        modulator2.addArguments(periodM, minM, maxM);
-        modulator2.addFunctions(modulator);
-
-        Argument kf = new Argument("kf = 800");
-        Function output = new Function("output(t) = carrier2(fc * t + kf * int(modulator2(tau * fm), tau, 0, t))");
-        output.addArguments(kf, fm, fc);
-        output.addFunctions(carrier2, modulator2);
-
-        System.out.println(output.calculate(5.0));
-        for (int i = 0; i < 10; i++) {
-            double t = i / 44100.0;
-            System.out.println("t=" + t + ", v=" + output.calculate(t));
-        }
 
 //        short[] audio = generateSamples(44100, 3.0, carrier2, modulator2, fc.getArgumentValue(), fm.getArgumentValue(), kf.getArgumentValue());
 //        System.out.println("soy done");
 //        playStored(audio, 44100);
-        MainFrame frame = new MainFrame();
-        frame.updateCanvas();
+        Params def = new Params(
+                "sin(t)",
+                "sin(t)",
+                "2 * pi",
+                "2 * pi",
+                200,
+                0,
+                0
+        );
+        Synthesis synthesizer = new Synthesis(def);
+        MainFrame frame = new MainFrame(synthesizer);
     }
 
-    private static double[] extrema(Function a, int sampleF, double period) {
+    public static double[] extrema(Function a, int sampleF, double period) {
         double[] out = new double[2];
 
         double max = a.calculate(0);

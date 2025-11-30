@@ -6,20 +6,30 @@ public class Canvas extends JPanel {
     private int panelHeight;
     private int panelWidth;
     private int dS = 12; // Dead space --> combination of empty border as well as border thickness
-    public Function a;
-    public double period;
-    public double fPeriod;
-    public double f;
+    private Function a;
+    private double period;
+    private double fPeriod;
+    private double freq;
     private int periodMinimizer = 50;
-    public Canvas() {
+    private String type_;
+    public Canvas(String type) {
         a = new Function("s(t) = sin(t)");
         period = 2 * Math.PI;
-        fPeriod = f * period / periodMinimizer;
+        fPeriod = freq * period / periodMinimizer;
+        type_ = type;
+    }
+
+    public String getType() {return type_;}
+    public void changeParam(Function newFunction,double newPeriod, double newFreq) {
+        a = newFunction;
+        period = newPeriod;
+        freq = newFreq;
+
+        fPeriod = freq * period / periodMinimizer;
     }
     protected void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         Insets insets = getInsets();
 
