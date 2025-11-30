@@ -29,6 +29,6 @@ public class Params {
 
     @Override
     public String toString() {
-        return "yabadabadoo";
+        return carrier_ + ", " + modulator_ + ", " + periodC_ + ", " + periodM_ + ", " + fc_ + ", " + fm_ + ", " + kf_;
     }
 }
