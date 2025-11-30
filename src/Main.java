@@ -49,9 +49,11 @@ public class Main {
             System.out.println("t=" + t + ", v=" + output.calculate(t));
         }
 
-        short[] audio = generateSamples(44100, 3.0, carrier2, modulator2, fc.getArgumentValue(), fm.getArgumentValue(), kf.getArgumentValue());
-        System.out.println("soy done");
-        playStored(audio, 44100);
+//        short[] audio = generateSamples(44100, 3.0, carrier2, modulator2, fc.getArgumentValue(), fm.getArgumentValue(), kf.getArgumentValue());
+//        System.out.println("soy done");
+//        playStored(audio, 44100);
+        MainFrame frame = new MainFrame();
+        frame.updateCanvas();
     }
 
     private static double[] extrema(Function a, int sampleF, double period) {
