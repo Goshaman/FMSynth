@@ -101,7 +101,9 @@ public class MainFrame extends JFrame {
 
             play.addActionListener(e -> {
                 try {
-                    synth.play();
+                    synth.playSignal();
+                    Thread.sleep(1000);
+                    synth.stopSignal();
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }

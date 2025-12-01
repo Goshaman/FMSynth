@@ -22,6 +22,9 @@ public class Main {
                 0
         );
         Synthesis synthesizer = new Synthesis(def);
+
+        synthesizer.start();
+        synthesizer.stopSignal();
         MainFrame frame = new MainFrame(synthesizer);
     }
 

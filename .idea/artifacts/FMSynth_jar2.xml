@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact name="FMSynth:jar2">
+    <output-path>$PROJECT_DIR$/out/artifacts/FMSynth_jar2</output-path>
+    <root id="root">
+      <element id="archive" name="FMSynth.jar">
+        <element id="module-output" name="FMSynth" />
+      </element>
+    </root>
+  </artifact>
+</component>
