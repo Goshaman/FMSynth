@@ -11,7 +11,7 @@ public class MainFrame extends JFrame {
     private Synthesis synth;
 
     private int borderWidth = 3;
-    private int panelHeight = 400;
+    private int panelHeight = 360;
     private int panelWidth = 1600;
     public MainFrame(Synthesis s) {
         setTitle("FMSynth");

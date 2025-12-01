@@ -5,8 +5,8 @@ public class Synthesis {
     private Function carrier, modulator, carrier2, modulator2;
     private Argument periodC, periodM, fc, fm, kf;
     private short[] audio;
-    public Synthesis(Params p){
-        updateParams(p);
+    public Synthesis(){
+
     }
 
     public short[] getSamples() {return audio;}

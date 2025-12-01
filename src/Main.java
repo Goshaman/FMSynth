@@ -21,7 +21,7 @@ public class Main {
                 0,
                 0
         );
-        Synthesis synthesizer = new Synthesis(def);
+        Synthesis synthesizer = new Synthesis();
         MainFrame frame = new MainFrame(synthesizer);
     }
 
@@ -98,12 +98,10 @@ public class Main {
                 sampleRate, 16, 1, true, false
         );
         SourceDataLine line = AudioSystem.getSourceDataLine(format);
-
         line.open(format);
         line.start();
-
         byte[] buffer = new byte[samples.length * 2];
-
+        
         for (int i = 0; i < samples.length; i++) {
             short v = samples[i];
             buffer[2*i] = (byte)(v & 0xFF);          // little endian
