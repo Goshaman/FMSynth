@@ -1,3 +1,5 @@
 The project will be a software based FM (frequency modulation) synthesizer. This application will generate complex audio waveforms using various mathematical functions (modulators) which alter the frequency of another function (the carrier). 
 The main part of the application is an audio engine which is responsible for processing these functions to produce sound. A user can control the interactions of these functions through the modulation matrix, which determines the routing and intensity of the modulations. 
 A key feature of this project is the use of a GUI built with Java Swing. It will provide controls for the synthesizer's parameters and will also include a graphing component to visualize the initial and final waveforms. To do this smoothly, we will use interpolation to create neat graphs clearly depicting the waveforms.
+<img width="828" height="694" alt="image" src="https://github.com/user-attachments/assets/16be25d4-7d42-4366-ba53-8028b3c9729b" />
+
