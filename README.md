@@ -5,5 +5,6 @@ A key feature of this project is the use of a GUI built with Java Swing. It will
 -- Examples
 <img width="1572" height="1224" alt="image" src="https://github.com/user-attachments/assets/03946d8c-74a5-4a21-9027-29dde0705522" />
 <img width="1574" height="1230" alt="image" src="https://github.com/user-attachments/assets/7188d2ad-db5b-4220-ad8d-158a1b373d49" />
+<img width="1583" height="1236" alt="image" src="https://github.com/user-attachments/assets/e31807fa-66ae-4847-9c3d-9d0317299361" />
 
 
