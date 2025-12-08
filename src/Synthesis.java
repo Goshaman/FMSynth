@@ -4,55 +4,77 @@ import javax.sound.sampled.*;
 import java.util.Arrays;
 
 public class Synthesis {
+    private static final int NUM_OPERATORS = 6;
+    private static final int SAMPLE_RATE = 44100;
+    private static final double FADE_STEP = 0.0005;
+
     private SourceDataLine line;
     private Thread audioThread;
-    private volatile Function carrier, modulator, carrier2, modulator2;
-    private volatile Argument periodC, periodM, fc, fm, kf;
+
+    private volatile Function[] operators;
+    private volatile Function[] normalizedOperators;
+    private volatile Argument[] periods;
+    private volatile double[] frequencies;
+    private volatile double[][] modulationMatrix;
+
     private short[] audio;
 
-    // Flags to control the background thread
     private volatile boolean running = false;
     private volatile boolean shouldStop = false;
-    private volatile boolean signalActive = true;
 
     private double currentVolume = 0.0;
     private double targetVolume = 1.0;
-    // Fade step per sample: 0.0005 means it takes 2000 samples (~45ms) to fade fully
-    // This is fast enough to feel instant, but slow enough to remove clicks.
-    private final double FADE_STEP = 0.0005;
-    private final int SAMPLE_RATE = 44100;
-    public Synthesis(Params p){
+
+    public Synthesis(Params p) {
         try {
             AudioFormat format = new AudioFormat(SAMPLE_RATE, 16, 1, true, false);
             line = AudioSystem.getSourceDataLine(format);
-            // 8192 buffer offers a good balance of low latency and stability
-            line.open(format, 8192);
+            line.open(format, 32768);  // Increased buffer size from 8192 to 32768
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
 
+        operators = new Function[NUM_OPERATORS];
+        normalizedOperators = new Function[NUM_OPERATORS];
+        periods = new Argument[NUM_OPERATORS];
+        frequencies = new double[NUM_OPERATORS];
+        modulationMatrix = new double[NUM_OPERATORS][NUM_OPERATORS];
+
         updateParams(p);
     }
 
-    public short[] getSamples() {return audio;}
+    public short[] getSamples() { return audio; }
 
-    //public short[] getSamples() {return audio;}
     public double eval(double in, String type) {
-        if(type.equals("Carrier")) {
-            return carrier2.calculate(in);
-        } else {
-            return modulator2.calculate(in);
+        if (type.equals("Carrier")) {
+            return normalizedOperators[0] != null ? normalizedOperators[0].calculate(in) : 0;
+        } else if (type.equals("Modulator")) {
+            return normalizedOperators[1] != null ? normalizedOperators[1].calculate(in) : 0;
+        } else if (type.startsWith("Op")) {
+            try {
+                int opNum = Integer.parseInt(type.substring(2));
+                if (opNum >= 0 && opNum < NUM_OPERATORS && normalizedOperators[opNum] != null) {
+                    return normalizedOperators[opNum].calculate(in);
+                }
+            } catch (Exception e) {
+            }
         }
+        return 0;
     }
 
     public void updateParams(Params p) {
-        carrier = new Function("carrier(t) = " + p.getCarrier());
-        modulator = new Function("modulator(t) = " + p.getModulator());
-        periodC = new Argument("periodC = " + p.getPeriodC());
-        periodM = new Argument("periodM = " + p.getPeriodM());
-        fc = new Argument("fc = " + p.getFc());
-        fm = new Argument("fm = " + p.getFm());
-        kf = new Argument("kf = " + p.getKf());
+        for (int i = 0; i < NUM_OPERATORS; i++) {
+            operators[i] = new Function("op" + i + "(t) = " + p.getOperatorFunction(i));
+            periods[i] = new Argument("period" + i + " = " + p.getPeriod(i));
+            frequencies[i] = p.getFrequency(i);
+        }
+
+        double[][] matrix = p.getModulationMatrix();
+        for (int i = 0; i < NUM_OPERATORS; i++) {
+            for (int j = 0; j < NUM_OPERATORS; j++) {
+                modulationMatrix[i][j] = matrix[i][j];
+            }
+        }
 
         synthesize();
     }
@@ -65,11 +87,9 @@ public class Synthesis {
         currentVolume = 0.0;
         targetVolume = 1.0;
 
-        // Prime the line with a tiny bit of silence to prevent startup click
-        line.write(new byte[1024], 0, 1024);
+        line.write(new byte[4096], 0, 4096);  // Pre-fill with larger buffer
         line.start();
 
-        // Start the background generation loop
         audioThread = new Thread(this::audioLoop);
         audioThread.setPriority(Thread.MAX_PRIORITY);
         audioThread.start();
@@ -90,34 +110,18 @@ public class Synthesis {
     }
 
     public void synthesize() {
-        double[] extremaC = Main.extrema(carrier, 120, periodC.getArgumentValue());
-        Argument maxC = new Argument("maxC");
-        Argument minC = new Argument("minC");
+        for (int i = 0; i < NUM_OPERATORS; i++) {
+            double[] extrema = Main.extrema(operators[i], 120, periods[i].getArgumentValue());
+            Argument max = new Argument("max" + i, extrema[0]);
+            Argument min = new Argument("min" + i, extrema[1]);
 
-        maxC.setArgumentValue(extremaC[0]);
-        minC.setArgumentValue(extremaC[1]);
-
-        carrier2 = new Function("carrier2(t) = 2 * ((carrier(mod(periodC * t, periodC)) - minC)/(maxC - minC)) - 1");
-        carrier2.addArguments(periodC, minC, maxC);
-        carrier2.addFunctions(carrier);
-
-        double[] extremaM = Main.extrema(modulator, 120, periodM.getArgumentValue());
-        Argument maxM = new Argument("maxM");
-        Argument minM = new Argument("minM");
-
-        maxM.setArgumentValue(extremaM[0]);
-        minM.setArgumentValue(extremaM[1]);
-
-        modulator2 = new Function("modulator2(t) = 2 * ((modulator(mod(periodM * t, periodM)) - minM)/(maxM - minM)) - 1");
-        modulator2.addArguments(periodM, minM, maxM);
-        modulator2.addFunctions(modulator);
-
-        Function output = new Function("output(t) = carrier2(fc * t + kf * int(modulator2(tau * fm), tau, 0, t))");
-        output.addArguments(kf, fm, fc);
-        output.addFunctions(carrier2, modulator2);
+            normalizedOperators[i] = new Function("norm" + i + "(t) = 2 * ((op" + i + "(mod(period" + i + " * t, period" + i + ")) - min" + i + ")/(max" + i + " - min" + i + ")) - 1");
+            normalizedOperators[i].addArguments(periods[i], min, max);
+            normalizedOperators[i].addFunctions(operators[i]);
+        }
 
         System.out.println("starting sample generation");
-        audio = Main.generateSamples(44100, 3.0, carrier2, modulator2, fc.getArgumentValue(), fm.getArgumentValue(), kf.getArgumentValue());
+        audio = generateSamples(SAMPLE_RATE, 3.0);
         System.out.println("ending sample generation");
     }
 
@@ -125,40 +129,39 @@ public class Synthesis {
         targetVolume = 0.0;
     }
 
-    /**
-     * Unmutes the sound.
-     * Use this to start hearing the signal again.
-     */
     public void playSignal() {
         targetVolume = 1.0;
     }
 
     private void audioLoop() {
         double dt = 1.0 / SAMPLE_RATE;
-
-        double carrierPhase = 0.0;
-        double modulatorPhase = 0.0;
-
-        byte[] buffer = new byte[2048]; // 1024 samples
+        double[] phases = new double[NUM_OPERATORS];
+        byte[] buffer = new byte[8192];  // Increased from 2048 to 8192 bytes (4096 samples)
 
         while (!shouldStop) {
-            Function locCar = carrier2;
-            Function locMod = modulator2;
-            double locFc = fc.getArgumentValue();
-            double locFm = fm.getArgumentValue();
-            double locKf = kf.getArgumentValue();
+            Function[] locOps = normalizedOperators.clone();
+            double[] locFreqs = frequencies.clone();
+            double[][] locMatrix = new double[NUM_OPERATORS][NUM_OPERATORS];
+            for (int i = 0; i < NUM_OPERATORS; i++) {
+                locMatrix[i] = modulationMatrix[i].clone();
+            }
 
-            // Optimization: If completely silent AND target is silence, write 0s and skip math.
-            // This effectively pauses the phase calculations while muted.
             if (currentVolume <= 0.0001 && targetVolume == 0.0) {
-                currentVolume = 0.0; // Clamp to exact 0
+                currentVolume = 0.0;
                 Arrays.fill(buffer, (byte)0);
                 line.write(buffer, 0, buffer.length);
                 continue;
             }
 
-            // If parameters are missing, treat as silence
-            if (locCar == null || locMod == null) {
+            boolean allNull = true;
+            for (Function op : locOps) {
+                if (op != null) {
+                    allNull = false;
+                    break;
+                }
+            }
+
+            if (allNull) {
                 Arrays.fill(buffer, (byte)0);
                 line.write(buffer, 0, buffer.length);
                 continue;
@@ -166,10 +169,7 @@ public class Synthesis {
 
             int bufferIdx = 0;
 
-            // Generate 1024 samples
-            for (int i = 0; i < 1024; i++) {
-
-                // --- Volume Ramping Logic ---
+            for (int i = 0; i < 4096; i++) {  // Increased from 1024 to 4096 samples
                 if (currentVolume < targetVolume) {
                     currentVolume += FADE_STEP;
                     if (currentVolume > targetVolume) currentVolume = targetVolume;
@@ -177,22 +177,36 @@ public class Synthesis {
                     currentVolume -= FADE_STEP;
                     if (currentVolume < targetVolume) currentVolume = targetVolume;
                 }
-                // -----------------------------
 
-                // 1. Calculate Modulator
-                double modVal = locMod.calculate(modulatorPhase);
-                modulatorPhase += locFm * dt;
+                double[] modulations = new double[NUM_OPERATORS];
 
-                // 2. Calculate Carrier
-                double instFreq = locFc + locKf * modVal;
-                double val = locCar.calculate(carrierPhase);
-                carrierPhase += instFreq * dt;
+                for (int to = 0; to < NUM_OPERATORS; to++) {
+                    double totalMod = 0;
+                    for (int from = 0; from < NUM_OPERATORS; from++) {
+                        if (locOps[from] != null && locMatrix[from][to] != 0) {
+                            double modOutput = locOps[from].calculate(phases[from]);
+                            totalMod += modOutput * locMatrix[from][to];
+                        }
+                    }
+                    modulations[to] = totalMod;
+                }
 
-                // 3. Apply Volume & Process Output
+                double[] opOutputs = new double[NUM_OPERATORS];
+                for (int op = 0; op < NUM_OPERATORS; op++) {
+                    if (locOps[op] != null) {
+                        double modulatedPhase = phases[op] + modulations[op];
+                        opOutputs[op] = locOps[op].calculate(modulatedPhase);
+                    }
+                }
+
+                for (int op = 0; op < NUM_OPERATORS; op++) {
+                    phases[op] += locFreqs[op] * dt;
+                }
+
+                double val = opOutputs[0];
+
                 if (!Double.isFinite(val)) val = 0;
                 val = Math.max(-1, Math.min(1, val));
-
-                // Apply the envelope
                 val *= currentVolume;
 
                 short sample = (short) (val * Short.MAX_VALUE);
@@ -201,12 +215,50 @@ public class Synthesis {
                 buffer[bufferIdx++] = (byte) ((sample >> 8) & 0xFF);
             }
 
-            // Write chunk to the sound card
             line.write(buffer, 0, buffer.length);
         }
     }
 
-//    public void play() throws Exception {
-//        Main.generateAndPlay(44100, 3.0, carrier2, modulator2, fc.getArgumentValue(), fm.getArgumentValue(), kf.getArgumentValue());
-//    }
+    private short[] generateSamples(int sampleRate, double duration) {
+        int totalSamples = (int)(sampleRate * duration);
+        short[] samples = new short[totalSamples];
+        double dt = 1.0 / sampleRate;
+        double[] phases = new double[NUM_OPERATORS];
+
+        for (int i = 0; i < totalSamples; i++) {
+            double[] modulations = new double[NUM_OPERATORS];
+
+            for (int to = 0; to < NUM_OPERATORS; to++) {
+                double totalMod = 0;
+                for (int from = 0; from < NUM_OPERATORS; from++) {
+                    if (normalizedOperators[from] != null && modulationMatrix[from][to] != 0) {
+                        double modOutput = normalizedOperators[from].calculate(phases[from]);
+                        totalMod += modOutput * modulationMatrix[from][to];
+                    }
+                }
+                modulations[to] = totalMod;
+            }
+
+            double[] opOutputs = new double[NUM_OPERATORS];
+            for (int op = 0; op < NUM_OPERATORS; op++) {
+                if (normalizedOperators[op] != null) {
+                    double modulatedPhase = phases[op] + modulations[op];
+                    opOutputs[op] = normalizedOperators[op].calculate(modulatedPhase);
+                }
+            }
+
+            for (int op = 0; op < NUM_OPERATORS; op++) {
+                phases[op] += frequencies[op] * dt;
+            }
+
+            double value = opOutputs[0];
+
+            if (!Double.isFinite(value)) value = 0;
+            value = Math.max(-1, Math.min(1, value));
+
+            samples[i] = (short)(value * Short.MAX_VALUE);
+        }
+
+        return samples;
+    }
 }

@@ -1,0 +1,383 @@
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import org.mariuszgromada.math.mxparser.*;
+import java.util.ArrayList;
+
+public class MainFrame extends JFrame {
+    private static final int NUM_OPERATORS = 6;
+
+    public ArrayList<JPanel> panels;
+    public JPanel mainPanel;
+    private JPanel matrixPanel;
+    private Synthesis synth;
+
+    private int borderWidth = 2;
+    private int operatorPanelHeight = 200;
+    private int panelWidth = 1400;
+
+    public MainFrame(Synthesis s) {
+        setTitle("FMSynth - 6 Operators");
+        setSize(panelWidth, 900);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(true);
+        setVisible(true);
+
+        JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        scrollPane.setViewportView(mainPanel);
+        add(scrollPane, BorderLayout.CENTER);
+
+        panels = new ArrayList<JPanel>();
+
+        for (int i = 0; i < NUM_OPERATORS; i++) {
+            CreateOperatorPanel(i);
+        }
+
+        CreateModulationMatrixPanel();
+        CreateOutputPanel();
+
+        synth = s;
+    }
+
+    public void CreateOperatorPanel(int operatorNum) {
+        JPanel panel = new JPanel();
+        panels.add(panel);
+        panel.setPreferredSize(new Dimension(panelWidth - 30, operatorPanelHeight));
+        panel.setBackground(Color.LIGHT_GRAY);
+        panel.setLayout(new BorderLayout());
+        panel.setName("Op" + operatorNum);
+
+        Border lineBorder = new LineBorder(Color.GRAY, borderWidth, false);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(5,10,5,10),
+                lineBorder
+        ));
+
+        JPanel hOrder = new JPanel();
+        hOrder.setLayout(new BoxLayout(hOrder, BoxLayout.X_AXIS));
+
+        JPanel vOrder = new JPanel();
+        vOrder.setName("Vertical Order");
+        vOrder.setLayout(new BoxLayout(vOrder, BoxLayout.Y_AXIS));
+        vOrder.setAlignmentY(Component.TOP_ALIGNMENT);
+        vOrder.setBorder(BorderFactory.createEmptyBorder(0,10,0,0));
+
+        vOrder.add(new JLabel("Operator " + operatorNum));
+        vOrder.add(Box.createRigidArea(new Dimension(0,3)));
+
+        vOrder.add(new JLabel("Function:"));
+        vOrder.add(makeTextField(120, 24, "Op" + operatorNum + "_function"));
+        vOrder.add(Box.createRigidArea(new Dimension(0,3)));
+
+        vOrder.add(new JLabel("Period:"));
+        vOrder.add(makeTextField(120, 24, "Op" + operatorNum + "_period"));
+        vOrder.add(Box.createRigidArea(new Dimension(0,3)));
+
+        vOrder.add(new JLabel("Frequency:"));
+        vOrder.add(makeTextField(120, 24, "Op" + operatorNum + "_freq"));
+
+        Canvas canvas = new Canvas("Op" + operatorNum);
+        canvas.setPreferredSize(new Dimension(0, operatorPanelHeight - 20));
+        canvas.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(5,5,5,5),
+                BorderFactory.createLineBorder(Color.GRAY, 1)
+        ));
+
+        hOrder.add(vOrder);
+        hOrder.add(Box.createRigidArea(new Dimension(10, 0)));
+        hOrder.add(canvas);
+        hOrder.setName("Horizontal Order");
+
+        panel.add(hOrder, BorderLayout.CENTER);
+        panel.setMaximumSize(panel.getPreferredSize());
+
+        mainPanel.add(panel);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+    public void CreateModulationMatrixPanel() {
+        matrixPanel = new JPanel();
+        matrixPanel.setPreferredSize(new Dimension(panelWidth - 30, 280));
+        matrixPanel.setBackground(Color.WHITE);
+        matrixPanel.setLayout(new BorderLayout());
+        matrixPanel.setName("ModMatrix");
+
+        Border lineBorder = new LineBorder(Color.DARK_GRAY, borderWidth, false);
+        matrixPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(5,10,5,10),
+                lineBorder
+        ));
+
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+        JLabel title = new JLabel("Modulation Matrix (Rows modulate Columns)");
+        title.setFont(new Font("Arial", Font.BOLD, 14));
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        content.add(title);
+        content.add(Box.createRigidArea(new Dimension(0,10)));
+
+        JPanel gridPanel = new JPanel(new GridLayout(NUM_OPERATORS + 1, NUM_OPERATORS + 1, 5, 5));
+
+        gridPanel.add(new JLabel(""));
+        for (int i = 0; i < NUM_OPERATORS; i++) {
+            JLabel label = new JLabel("Op" + i, SwingConstants.CENTER);
+            label.setFont(new Font("Arial", Font.BOLD, 10));
+            gridPanel.add(label);
+        }
+
+        for (int from = 0; from < NUM_OPERATORS; from++) {
+            JLabel rowLabel = new JLabel("Op" + from, SwingConstants.LEFT);
+            rowLabel.setFont(new Font("Arial", Font.BOLD, 10));
+            gridPanel.add(rowLabel);
+
+            for (int to = 0; to < NUM_OPERATORS; to++) {
+                gridPanel.add(makeTextField(50, 24, "mod_" + from + "_" + to));
+            }
+        }
+
+        gridPanel.setMaximumSize(new Dimension(800, 200));
+        gridPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        content.add(gridPanel);
+
+        matrixPanel.add(content, BorderLayout.CENTER);
+        matrixPanel.setMaximumSize(matrixPanel.getPreferredSize());
+
+        mainPanel.add(matrixPanel);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+    public void CreateOutputPanel() {
+        JPanel panel = new JPanel();
+        panels.add(panel);
+        panel.setPreferredSize(new Dimension(panelWidth - 30, 350));
+        panel.setBackground(Color.LIGHT_GRAY);
+        panel.setLayout(new BorderLayout());
+        panel.setName("Output");
+
+        Border lineBorder = new LineBorder(Color.GRAY, borderWidth, false);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(5,10,5,10),
+                lineBorder
+        ));
+
+        JPanel hOrder = new JPanel();
+        hOrder.setLayout(new BoxLayout(hOrder, BoxLayout.X_AXIS));
+
+        JPanel vOrder = new JPanel();
+        vOrder.setName("Vertical Order");
+        vOrder.setLayout(new BoxLayout(vOrder, BoxLayout.Y_AXIS));
+        vOrder.setAlignmentY(Component.TOP_ALIGNMENT);
+        vOrder.setBorder(BorderFactory.createEmptyBorder(0,15,0,0));
+
+        vOrder.add(new JLabel("Output"));
+        vOrder.add(Box.createRigidArea(new Dimension(0,10)));
+
+        JButton redraw = new JButton("Redraw");
+        Dimension buttonSize = new Dimension(100, 30);
+        redraw.setPreferredSize(buttonSize);
+        redraw.setMaximumSize(buttonSize);
+        redraw.setMinimumSize(buttonSize);
+        redraw.setBackground(Color.GREEN);
+        redraw.setOpaque(true);
+        redraw.setFocusPainted(false);
+        redraw.setBorderPainted(false);
+
+        redraw.addActionListener(e -> {remake();});
+
+        JButton play = new JButton("Play");
+        play.setPreferredSize(buttonSize);
+        play.setMaximumSize(buttonSize);
+        play.setMinimumSize(buttonSize);
+        play.setBackground(Color.GREEN);
+        play.setOpaque(true);
+        play.setFocusPainted(false);
+        play.setBorderPainted(false);
+
+        play.addActionListener(e -> {
+            try {
+                synth.playSignal();
+                Thread.sleep(1000);
+                synth.stopSignal();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        vOrder.add(redraw);
+        vOrder.add(Box.createRigidArea(new Dimension(0,5)));
+        vOrder.add(play);
+
+        Canvas canvas = new Canvas("Output");
+        canvas.setPreferredSize(new Dimension(0, 330));
+        canvas.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(10,10,10,10),
+                BorderFactory.createLineBorder(Color.GRAY, 2)
+        ));
+
+        hOrder.add(vOrder);
+        hOrder.add(Box.createRigidArea(new Dimension(10, 0)));
+        hOrder.add(canvas);
+        hOrder.setName("Horizontal Order");
+
+        panel.add(hOrder, BorderLayout.CENTER);
+        panel.setMaximumSize(panel.getPreferredSize());
+
+        mainPanel.add(panel);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+    private JTextField makeTextField(int width, int height, String name) {
+        JTextField tf = new JTextField();
+        Dimension d = new Dimension(width, height);
+        tf.setPreferredSize(d);
+        tf.setMaximumSize(d);
+        tf.setMinimumSize(d);
+        tf.setAlignmentX(Component.LEFT_ALIGNMENT);
+        tf.setName(name);
+        return tf;
+    }
+
+    private void updateCanvas() {
+        for(JPanel i: panels) {
+            Canvas canvas;
+            for(Component a: i.getComponents()) {
+                if(a instanceof JPanel) {
+                    JPanel hOr = (JPanel) a;
+                    for(Component b: hOr.getComponents()) {
+                        if(b instanceof Canvas) {
+                            canvas = (Canvas) b;
+                            canvas.repaint();
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private JTextField findTextField(String name) {
+        for(JPanel panel: panels) {
+            for(Component a: panel.getComponents()) {
+                if (a instanceof JPanel) {
+                    JPanel hOr = (JPanel) a;
+                    for (Component b : hOr.getComponents()) {
+                        if (b instanceof JPanel) {
+                            JPanel vOr = (JPanel) b;
+                            for(Component field: vOr.getComponents()) {
+                                if(field instanceof JTextField) {
+                                    JTextField textField = (JTextField) field;
+                                    if(textField.getName().equals(name)) {
+                                        return textField;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for(Component a: matrixPanel.getComponents()) {
+            if (a instanceof JPanel) {
+                JPanel content = (JPanel) a;
+                for (Component b : content.getComponents()) {
+                    if (b instanceof JPanel) {
+                        JPanel gridPanel = (JPanel) b;
+                        for(Component field: gridPanel.getComponents()) {
+                            if(field instanceof JTextField) {
+                                JTextField textField = (JTextField) field;
+                                if(textField.getName().equals(name)) {
+                                    return textField;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private void remake() {
+        String[] operatorFunctions = new String[NUM_OPERATORS];
+        String[] periods = new String[NUM_OPERATORS];
+        double[] frequencies = new double[NUM_OPERATORS];
+        double[][] modulationMatrix = new double[NUM_OPERATORS][NUM_OPERATORS];
+
+        for (int i = 0; i < NUM_OPERATORS; i++) {
+            JTextField funcField = findTextField("Op" + i + "_function");
+            JTextField periodField = findTextField("Op" + i + "_period");
+            JTextField freqField = findTextField("Op" + i + "_freq");
+
+            operatorFunctions[i] = (funcField != null && !funcField.getText().isEmpty()) ? funcField.getText() : "sin(t)";
+            periods[i] = (periodField != null && !periodField.getText().isEmpty()) ? periodField.getText() : "2 * pi";
+            frequencies[i] = (freqField != null && !freqField.getText().isEmpty()) ? Double.parseDouble(freqField.getText()) : 440.0;
+        }
+
+        for (int from = 0; from < NUM_OPERATORS; from++) {
+            for (int to = 0; to < NUM_OPERATORS; to++) {
+                JTextField modField = findTextField("mod_" + from + "_" + to);
+                modulationMatrix[from][to] = (modField != null && !modField.getText().isEmpty()) ? Double.parseDouble(modField.getText()) : 0.0;
+            }
+        }
+
+        Params params = new Params(operatorFunctions, periods, frequencies, modulationMatrix);
+        System.out.println(params);
+        synth.updateParams(params);
+
+        for (int i = 0; i < NUM_OPERATORS; i++) {
+            for(JPanel panel: panels) {
+                if(panel.getName() != null && panel.getName().equals("Op" + i)) {
+                    Canvas canvas = null;
+                    for(Component a: panel.getComponents()) {
+                        if(a instanceof JPanel) {
+                            JPanel hOr = (JPanel) a;
+                            for(Component b: hOr.getComponents()) {
+                                if(b instanceof Canvas) {
+                                    canvas = (Canvas) b;
+                                }
+                            }
+                        }
+                    }
+                    if(canvas != null) {
+                        canvas.changeParam(synth, periods[i], frequencies[i]);
+                    }
+                }
+            }
+        }
+
+        for(JPanel panel: panels) {
+            if(panel.getName() != null && panel.getName().equals("Output")) {
+                Canvas canvas = null;
+                for(Component a: panel.getComponents()) {
+                    if(a instanceof JPanel) {
+                        JPanel hOr = (JPanel) a;
+                        for(Component b: hOr.getComponents()) {
+                            if(b instanceof Canvas) {
+                                canvas = (Canvas) b;
+                            }
+                        }
+                    }
+                }
+                if(canvas != null) {
+                    canvas.changeParam(synth.getSamples(), periods[0], 200);
+                }
+            }
+        }
+
+        updateCanvas();
+    }
+}
