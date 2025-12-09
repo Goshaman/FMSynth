@@ -204,7 +204,7 @@ public class KeyboardPanel extends JPanel {
                 g2d.setColor(new Color(180, 180, 190));
                 g2d.setFont(new Font("SansSerif", Font.BOLD, 9));
                 FontMetrics fm = g2d.getFontMetrics();
-                String label = noteName.replace("#", "");  // Just show note letter
+                String label = noteName.substring(0, noteName.length() - 1);  // Show note with # but without octave
                 int textX = (w - fm.stringWidth(label)) / 2;
                 g2d.drawString(label, textX, h - 15);
             } else {
