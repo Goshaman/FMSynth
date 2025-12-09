@@ -8,7 +8,6 @@ public class Main {
     public static void main(String[] args) throws Exception {
         License.iConfirmNonCommercialUse("Gosha Rassokhin");
 
-
 //        short[] audio = generateSamples(44100, 3.0, carrier2, modulator2, fc.getArgumentValue(), fm.getArgumentValue(), kf.getArgumentValue());
 //        System.out.println("soy done");
 //        playStored(audio, 44100);
@@ -21,7 +20,7 @@ public class Main {
                 0,
                 0
         );
-        Synthesis synthesizer = new Synthesis(def);
+        Synthesis synthesizer = new Synthesis();
 
         synthesizer.start();
         synthesizer.stopSignal();

@@ -9,11 +9,11 @@ public class OperatorPanel extends JPanel {
     private JTextField periodField;
     private JTextField frequencyField;
     private JLabel frequencyLabel;
+    private Canvas canvas;
 
-    public OperatorPanel(Operator op, MainFrame parent) {
-        this.operator = op;
-        this.parent = parent;
-
+    public OperatorPanel(Operator op, MainFrame pare) {
+        operator = op;
+        parent = pare;
         // Nicer colors
         Color bgColor = new Color(220, 220, 220);
         Color borderColor = new Color(180, 180, 180);
@@ -34,6 +34,14 @@ public class OperatorPanel extends JPanel {
         controls.setLayout(new BoxLayout(controls, BoxLayout.Y_AXIS));
         controls.setBackground(bgColor);
 
+        // Right side - canvas
+        canvas = new Canvas("Operator");
+        canvas.setBackground(Color.WHITE);
+        canvas.setBorder(new LineBorder(borderColor, 1));
+        add(canvas, BorderLayout.CENTER);
+
+        canvas.setFunction(operator.getFunction(), operator.getPeriod());
+
         // Top row: label and remove button
         JPanel topRow = new JPanel(new BorderLayout());
         topRow.setBackground(bgColor);
@@ -52,7 +60,22 @@ public class OperatorPanel extends JPanel {
                 parent.removeOperator(operator.getId());
             }
         });
-        topRow.add(removeButton, BorderLayout.EAST);
+
+        JButton redrawButton = new JButton("↻");
+        redrawButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        redrawButton.setMargin(new Insets(0, 5, 0, 5));
+        redrawButton.setFocusPainted(false);
+        redrawButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                updateCanvas();
+            }
+        });
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
+        buttonPanel.setBackground(bgColor);
+        buttonPanel.add(redrawButton);
+        buttonPanel.add(removeButton);
+        topRow.add(buttonPanel, BorderLayout.EAST);
 
         controls.add(topRow);
         controls.add(Box.createVerticalStrut(8));
@@ -62,7 +85,6 @@ public class OperatorPanel extends JPanel {
         functionField = (JTextField) funcRow.getComponent(1);
         controls.add(funcRow);
         controls.add(Box.createVerticalStrut(5));
-
         // Period row
         JPanel perRow = createFieldRow("Per:", operator.getPeriod(), bgColor);
         periodField = (JTextField) perRow.getComponent(1);
@@ -84,12 +106,6 @@ public class OperatorPanel extends JPanel {
         controlsWrapper.add(controls, BorderLayout.CENTER);
 
         add(controlsWrapper, BorderLayout.WEST);
-
-        // Right side - canvas
-        JPanel canvasArea = new JPanel();
-        canvasArea.setBackground(Color.WHITE);
-        canvasArea.setBorder(new LineBorder(borderColor, 1));
-        add(canvasArea, BorderLayout.CENTER);
 
         // Dynamic resize
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -129,5 +145,16 @@ public class OperatorPanel extends JPanel {
 
     public Operator getOperator() {
         return operator;
+    }
+
+    public void updateCanvas() {
+        String func = functionField.getText();
+        String per = periodField.getText();
+
+        operator.setFunction(func);
+        operator.setPeriod(per);
+
+        canvas.setFunction(func, per);
+        parent.updateSynthesis();  // ADD THIS
     }
 }

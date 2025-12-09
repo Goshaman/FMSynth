@@ -12,7 +12,6 @@ public class Operator {
         period = "2*pi";          // default
         frequency = 200;          // default
     }
-
     // Getters
     public int getId() { return id; }
     public String getFunction() { return function; }

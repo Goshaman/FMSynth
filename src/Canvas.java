@@ -8,8 +8,8 @@ public class Canvas extends JPanel {
     private int dS = 12; // Dead space --> combination of empty border as well as border thickness
     private Function a;
     private double period;
-    private double fPeriod;
-    private double freq;
+    private double fPeriod; //how many cycles to show
+    private double freq = 440.0; //hz
     private int periodMinimizer = 50;
     private String type_;
     private short[] audioSamples;
@@ -44,6 +44,17 @@ public class Canvas extends JPanel {
 
         fPeriod = freq / periodMinimizer;
     }
+
+    public void setFunction(String func, String per) {
+        a = new Function("f(t) = " + func);
+        Argument p = new Argument("p = " + per); //calculate math expressions from strings
+        period = p.getArgumentValue();
+        fPeriod = period*4; //period adjusted by frequency, 4 periods displayed at a time
+
+        repaint();
+    }
+
+
     protected void paintComponent(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -75,19 +86,19 @@ public class Canvas extends JPanel {
             }
         }
         double[] curr = new double[2];
-        int samples = 44100;
-        if(type_.equals("Output")) samples /= periodMinimizer;
+        int samples = 300; //who put 44100 samples???? is that what's eating up my ram :(
+        if(type_.equals("Output")) samples = 800;
 
         for(int i = 1; i <= samples; i++) {
             curr[0] = x_offset + i * (panelWidth - 30) / samples;
-            if(type_.equals("Output") && audioSamples != null) {
+            if (type_.equals("Output") && audioSamples != null && i < audioSamples.length) {
                 curr[1] = y_offset - (audioSamples[i] / 32768.0 * (panelHeight / 2.0 - 15));
+            } else if (a != null) {
+                curr[1] = y_offset - (a.calculate(i * fPeriod / samples) * (panelHeight / 2.0 - 15));
+            } else if (synth_ != null) {
+                curr[1] = y_offset - (synth_.eval(i * fPeriod / samples, type_) * (panelHeight / 2.0 - 15));
             } else {
-                if(a != null) {
-                    curr[1] = y_offset - (a.calculate(i * fPeriod / samples) * (panelHeight / 2.0 - 15));
-                } else {
-                    curr[1] = y_offset - (synth_.eval(i * fPeriod / samples, type_) * (panelHeight / 2.0 - 15));
-                }
+                curr[1] = y_offset;
             }
             g2d.drawLine((int)prev[0], (int)prev[1], (int)curr[0], (int)curr[1]);
             prev[0] = curr[0];
