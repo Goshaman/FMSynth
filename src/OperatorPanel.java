@@ -42,14 +42,39 @@ public class OperatorPanel extends JPanel {
 
         canvas.setFunction(operator.getFunction(), operator.getPeriod());
 
-        // Top row: label and remove button
+        // Top row: label, carrier/modulator toggle, and remove button
         JPanel topRow = new JPanel(new BorderLayout());
         topRow.setBackground(bgColor);
         topRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
 
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        leftPanel.setBackground(bgColor);
+
         JLabel nameLabel = new JLabel("Op " + operator.getId());
         nameLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
-        topRow.add(nameLabel, BorderLayout.WEST);
+        leftPanel.add(nameLabel);
+
+        // Carrier/Modulator toggle button
+        final JToggleButton typeToggle = new JToggleButton(operator.isCarrier() ? "C" : "M");
+        typeToggle.setSelected(operator.isCarrier());
+        typeToggle.setFont(new Font("SansSerif", Font.BOLD, 10));
+        typeToggle.setMargin(new Insets(0, 8, 0, 8));
+        typeToggle.setFocusPainted(false);
+        typeToggle.setToolTipText(operator.isCarrier() ? "Carrier" : "Modulator");
+        typeToggle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                boolean isCarrier = typeToggle.isSelected();
+                operator.setCarrier(isCarrier);
+                typeToggle.setText(isCarrier ? "C" : "M");
+                typeToggle.setToolTipText(isCarrier ? "Carrier" : "Modulator");
+                // Show frequency field only for modulators
+                setFrequencyVisible(!isCarrier);
+                parent.globalRefresh();
+            }
+        });
+        leftPanel.add(typeToggle);
+
+        topRow.add(leftPanel, BorderLayout.WEST);
 
         JButton removeButton = new JButton("×");
         removeButton.setFont(new Font("SansSerif", Font.BOLD, 14));
@@ -61,21 +86,7 @@ public class OperatorPanel extends JPanel {
             }
         });
 
-        JButton redrawButton = new JButton("↻");
-        redrawButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        redrawButton.setMargin(new Insets(0, 5, 0, 5));
-        redrawButton.setFocusPainted(false);
-        redrawButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                updateCanvas();
-            }
-        });
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 0));
-        buttonPanel.setBackground(bgColor);
-        buttonPanel.add(redrawButton);
-        buttonPanel.add(removeButton);
-        topRow.add(buttonPanel, BorderLayout.EAST);
+        topRow.add(removeButton, BorderLayout.EAST);
 
         controls.add(topRow);
         controls.add(Box.createVerticalStrut(8));
@@ -83,11 +94,32 @@ public class OperatorPanel extends JPanel {
         // Function row
         JPanel funcRow = createFieldRow("Func:", operator.getFunction(), bgColor);
         functionField = (JTextField) funcRow.getComponent(1);
+        functionField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                updateCanvas();
+            }
+        });
+        functionField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent e) {
+                updateCanvas();
+            }
+        });
         controls.add(funcRow);
         controls.add(Box.createVerticalStrut(5));
+
         // Period row
         JPanel perRow = createFieldRow("Per:", operator.getPeriod(), bgColor);
         periodField = (JTextField) perRow.getComponent(1);
+        periodField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                updateCanvas();
+            }
+        });
+        periodField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent e) {
+                updateCanvas();
+            }
+        });
         controls.add(perRow);
         controls.add(Box.createVerticalStrut(5));
 
@@ -95,7 +127,20 @@ public class OperatorPanel extends JPanel {
         JPanel freqRow = createFieldRow("Freq:", String.valueOf(operator.getFrequency()), bgColor);
         frequencyLabel = (JLabel) freqRow.getComponent(0);
         frequencyField = (JTextField) freqRow.getComponent(1);
+        frequencyField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                updateFrequency();
+            }
+        });
+        frequencyField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent e) {
+                updateFrequency();
+            }
+        });
         controls.add(freqRow);
+
+        // Initially hide frequency for carriers (they use keyboard frequency)
+        setFrequencyVisible(!operator.isCarrier());
 
         // Glue pushes everything up
         controls.add(Box.createVerticalGlue());
@@ -155,6 +200,22 @@ public class OperatorPanel extends JPanel {
         operator.setPeriod(per);
 
         canvas.setFunction(func, per);
-        parent.updateSynthesis();  // ADD THIS
+        parent.globalRefresh();
+    }
+
+    public void refreshCanvas() {
+        // Refresh canvas without changing operator values
+        canvas.setFunction(operator.getFunction(), operator.getPeriod());
+    }
+
+    private void updateFrequency() {
+        try {
+            double freq = Double.parseDouble(frequencyField.getText());
+            operator.setFrequency(freq);
+            parent.globalRefresh();
+        } catch (NumberFormatException e) {
+            // Reset to current value if invalid
+            frequencyField.setText(String.valueOf(operator.getFrequency()));
+        }
     }
 }

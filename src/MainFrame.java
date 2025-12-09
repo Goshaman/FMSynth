@@ -10,6 +10,9 @@ public class MainFrame extends JFrame {
     private double minOperatorPercent = 0.20;  // minimum height before scroll appears
     private Synthesis synth;
     private boolean isResizing = false; // prevent infinite resize loop
+    private ModMatrixPanel modMatrixPanel;
+    private OscilloscopePanel oscilloscope;
+    private Timer oscilloscopeTimer;
 
     private int borderWidth = 3;
     private int panelHeight = 360;
@@ -17,7 +20,7 @@ public class MainFrame extends JFrame {
 
     public MainFrame(Synthesis s) {
         synth = s;
-        setTitle("FMSynth");
+        setTitle("TrottelSynth");
         setSize(panelWidth, 400*3 +50);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(true);
@@ -32,17 +35,16 @@ public class MainFrame extends JFrame {
         operators = new ArrayList<Operator>();
         operatorPanels = new ArrayList<OperatorPanel>();
 
-        //for mod matrix + output (or oscilloscope)
+        //for mod matrix + oscilloscope
         JPanel rightPanel = new JPanel(new BorderLayout());
         // mod matrix area, top part of right
-        JPanel modMatrixPanel = new JPanel();
-        modMatrixPanel.setBackground(Color.GRAY);
-        // output area
-        final JPanel outputPanel = new JPanel(); //final lets inner class (component listener) access this
-        outputPanel.setBackground(Color.LIGHT_GRAY);
-        //add matrix and output to rightPanel
+        modMatrixPanel = new ModMatrixPanel(this);
+        // oscilloscope area
+        oscilloscope = new OscilloscopePanel();
+        oscilloscope.setPreferredSize(new Dimension(0, 150));
+        //add matrix and oscilloscope to rightPanel
         rightPanel.add(modMatrixPanel, BorderLayout.CENTER);
-        rightPanel.add(outputPanel, BorderLayout.SOUTH);
+        rightPanel.add(oscilloscope, BorderLayout.SOUTH);
 
         //keyboard
         KeyboardPanel keyboardPanel = new KeyboardPanel(this, synth);
@@ -77,6 +79,8 @@ public class MainFrame extends JFrame {
         addOperator();
         addOperator();
         synth.setOperators(operators);
+        modMatrixPanel.updateMatrix(operators);
+        synth.setModMatrix(modMatrixPanel.getMatrixValues());
         topPanel.add(operatorsWrapper);
 
         //matrix and output
@@ -100,10 +104,10 @@ public class MainFrame extends JFrame {
                 if (keyboardHeight < 80) keyboardHeight = 80;
                 keyboardPanel.setPreferredSize(new Dimension(0, keyboardHeight));
 
-                // Update output panel height
-                int outputHeight = height / 5;
-                if (outputHeight < 100) outputHeight = 100;
-                outputPanel.setPreferredSize(new Dimension(0, outputHeight));
+                // Update oscilloscope height
+                int oscilloscopeHeight = height / 5;
+                if (oscilloscopeHeight < 100) oscilloscopeHeight = 100;
+                oscilloscope.setPreferredSize(new Dimension(0, oscilloscopeHeight));
 
                 resizeOperatorPanels();
                 revalidate();
@@ -111,6 +115,17 @@ public class MainFrame extends JFrame {
                 isResizing = false;
             }
         });
+
+        // Start global refresh timer (updates oscilloscope and all visuals)
+        oscilloscopeTimer = new Timer(50, new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                // Only update oscilloscope via timer (canvases update on change)
+                if (oscilloscope != null) {
+                    oscilloscope.updateSamples(synth.getSamples());
+                }
+            }
+        });
+        oscilloscopeTimer.start();
 
         setVisible(true);
     }
@@ -179,6 +194,8 @@ public class MainFrame extends JFrame {
         operatorsPanel.repaint();
         resizeOperatorPanels();
         synth.setOperators(operators);
+        modMatrixPanel.updateMatrix(operators);
+        synth.setModMatrix(modMatrixPanel.getMatrixValues());
     }
 
     public void removeOperator(int id) {
@@ -228,10 +245,33 @@ public class MainFrame extends JFrame {
         operatorsPanel.revalidate();
         operatorsPanel.repaint();
         synth.setOperators(operators);
+        modMatrixPanel.updateMatrix(operators);
+        synth.setModMatrix(modMatrixPanel.getMatrixValues());
     }
 
     public void updateSynthesis() {
         synth.setOperators(operators);
+        if (modMatrixPanel != null) {
+            synth.setModMatrix(modMatrixPanel.getMatrixValues());
+        }
+    }
+
+    public void globalRefresh() {
+        // Update synthesis
+        synth.setOperators(operators);
+        if (modMatrixPanel != null) {
+            synth.setModMatrix(modMatrixPanel.getMatrixValues());
+        }
+
+        // Update all operator canvases
+        for (OperatorPanel opPanel : operatorPanels) {
+            opPanel.refreshCanvas();
+        }
+
+        // Update oscilloscope
+        if (oscilloscope != null) {
+            oscilloscope.updateSamples(synth.getSamples());
+        }
     }
 
     // Getter for operators (so Synthesis can access them)

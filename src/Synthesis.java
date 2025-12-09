@@ -13,6 +13,7 @@ public class Synthesis {
     private final int BUFFER_SIZE = 800;
     private ArrayList<Operator> operators;
     private ArrayList<Function> operatorFunctions;
+    private volatile int[][] modMatrix;
 
     public void setOperators(ArrayList<Operator> ops) {
         operators = ops;
@@ -23,6 +24,10 @@ public class Synthesis {
                 operatorFunctions.add(new Function("f(t) = " + op.getFunction()));
             }
         }
+    }
+
+    public void setModMatrix(int[][] matrix) {
+        modMatrix = matrix;
     }
 
     public Synthesis() {
@@ -74,7 +79,7 @@ public class Synthesis {
     }
 
     private void audioLoop() {
-        double phase = 0;
+        double[] phases = new double[10]; // max 10 operators
         double dt = 1.0 / SAMPLE_RATE;
         byte[] buffer = new byte[2048];
 
@@ -85,21 +90,62 @@ public class Synthesis {
                 double value = 0;
 
                 if (playing) {
-                    if (operatorFunctions != null && operatorFunctions.size() > 0) {
-                        // Sum all operators (treat them all as carriers for now)
-                        double t = phase * 2 * Math.PI;
-                        for (Function func : operatorFunctions) {
-                            double opValue = func.calculate(t);
-                            if (Double.isFinite(opValue)) {
-                                value += opValue / operatorFunctions.size();
+                    if (operatorFunctions != null && operatorFunctions.size() > 0 && operators != null) {
+                        int numOps = operators.size();
+                        double[] opOutputs = new double[numOps];
+
+                        // First pass: calculate all operator outputs
+                        for (int opIdx = 0; opIdx < numOps; opIdx++) {
+                            Operator op = operators.get(opIdx);
+                            Function func = operatorFunctions.get(opIdx);
+
+                            // Base frequency: carriers use keyboard, modulators use their own
+                            double opFreq = op.isCarrier() ? frequency : op.getFrequency();
+
+                            // Calculate modulation from other operators (only if this is a carrier)
+                            double modulation = 0;
+                            if (op.isCarrier() && modMatrix != null && modMatrix.length == numOps) {
+                                for (int modIdx = 0; modIdx < numOps; modIdx++) {
+                                    if (modIdx != opIdx && modMatrix[modIdx][opIdx] != 0) {
+                                        // modIdx modulates opIdx
+                                        double modDepth = modMatrix[modIdx][opIdx] / 10.0; // scale mod index
+                                        modulation += opOutputs[modIdx] * modDepth;
+                                    }
+                                }
                             }
+
+                            // Apply phase modulation (FM synthesis)
+                            double t = (phases[opIdx] + modulation) * 2 * Math.PI;
+                            opOutputs[opIdx] = func.calculate(t);
+
+                            if (!Double.isFinite(opOutputs[opIdx])) {
+                                opOutputs[opIdx] = 0;
+                            }
+
+                            // Update phase for this operator
+                            phases[opIdx] += opFreq * dt;
+                            if (phases[opIdx] > 1) phases[opIdx] -= 1;
+                        }
+
+                        // Second pass: sum carrier outputs
+                        int carrierCount = 0;
+                        for (int opIdx = 0; opIdx < numOps; opIdx++) {
+                            if (operators.get(opIdx).isCarrier()) {
+                                value += opOutputs[opIdx];
+                                carrierCount++;
+                            }
+                        }
+
+                        // Normalize by carrier count
+                        if (carrierCount > 0) {
+                            value /= carrierCount;
                         }
                     } else {
                         // Fallback to sine if no operators
-                        value = Math.sin(phase * 2 * Math.PI);
+                        value = Math.sin(phases[0] * 2 * Math.PI);
+                        phases[0] += frequency * dt;
+                        if (phases[0] > 1) phases[0] -= 1;
                     }
-                    phase += frequency * dt;
-                    if (phase > 1) phase -= 1;
                 }
 
                 short sample = (short)(value * Short.MAX_VALUE * 0.15);
