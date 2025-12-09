@@ -94,40 +94,61 @@ public class Synthesis {
                         int numOps = operators.size();
                         double[] opOutputs = new double[numOps];
 
-                        // First pass: calculate all operator outputs
+                        // First pass: calculate modulators (no modulation applied)
                         for (int opIdx = 0; opIdx < numOps; opIdx++) {
                             Operator op = operators.get(opIdx);
-                            Function func = operatorFunctions.get(opIdx);
+                            if (!op.isCarrier()) {
+                                Function func = operatorFunctions.get(opIdx);
+                                double opFreq = op.getFrequency();
 
-                            // Base frequency: carriers use keyboard, modulators use their own
-                            double opFreq = op.isCarrier() ? frequency : op.getFrequency();
+                                // Modulators don't receive modulation
+                                double t = phases[opIdx] * 2 * Math.PI;
+                                opOutputs[opIdx] = func.calculate(t);
 
-                            // Calculate modulation from other operators (only if this is a carrier)
-                            double modulation = 0;
-                            if (op.isCarrier() && modMatrix != null && modMatrix.length == numOps) {
-                                for (int modIdx = 0; modIdx < numOps; modIdx++) {
-                                    if (modIdx != opIdx && modMatrix[modIdx][opIdx] != 0) {
-                                        // modIdx modulates opIdx
-                                        double modDepth = modMatrix[modIdx][opIdx] / 10.0; // scale mod index
-                                        modulation += opOutputs[modIdx] * modDepth;
-                                    }
+                                if (!Double.isFinite(opOutputs[opIdx])) {
+                                    opOutputs[opIdx] = 0;
                                 }
+
+                                // Update phase for modulator
+                                phases[opIdx] += opFreq * dt;
+                                if (phases[opIdx] > 1) phases[opIdx] -= 1;
                             }
-
-                            // Apply phase modulation (FM synthesis)
-                            double t = (phases[opIdx] + modulation) * 2 * Math.PI;
-                            opOutputs[opIdx] = func.calculate(t);
-
-                            if (!Double.isFinite(opOutputs[opIdx])) {
-                                opOutputs[opIdx] = 0;
-                            }
-
-                            // Update phase for this operator
-                            phases[opIdx] += opFreq * dt;
-                            if (phases[opIdx] > 1) phases[opIdx] -= 1;
                         }
 
-                        // Second pass: sum carrier outputs
+                        // Second pass: calculate carriers (with modulation from modulators)
+                        for (int opIdx = 0; opIdx < numOps; opIdx++) {
+                            Operator op = operators.get(opIdx);
+                            if (op.isCarrier()) {
+                                Function func = operatorFunctions.get(opIdx);
+                                double opFreq = frequency; // Carriers use keyboard frequency
+
+                                // Calculate modulation from modulators
+                                double modulation = 0;
+                                if (modMatrix != null && modMatrix.length == numOps) {
+                                    for (int modIdx = 0; modIdx < numOps; modIdx++) {
+                                        if (modIdx != opIdx && modMatrix[modIdx][opIdx] != 0) {
+                                            // modIdx modulates opIdx
+                                            double modDepth = modMatrix[modIdx][opIdx] / 10.0; // scale mod index
+                                            modulation += opOutputs[modIdx] * modDepth;
+                                        }
+                                    }
+                                }
+
+                                // Apply phase modulation (FM synthesis)
+                                double t = (phases[opIdx] + modulation) * 2 * Math.PI;
+                                opOutputs[opIdx] = func.calculate(t);
+
+                                if (!Double.isFinite(opOutputs[opIdx])) {
+                                    opOutputs[opIdx] = 0;
+                                }
+
+                                // Update phase for carrier
+                                phases[opIdx] += opFreq * dt;
+                                if (phases[opIdx] > 1) phases[opIdx] -= 1;
+                            }
+                        }
+
+                        // Third pass: sum carrier outputs
                         int carrierCount = 0;
                         for (int opIdx = 0; opIdx < numOps; opIdx++) {
                             if (operators.get(opIdx).isCarrier()) {
