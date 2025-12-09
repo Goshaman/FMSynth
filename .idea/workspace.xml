@@ -5,12 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d0452497-fad9-45b5-a144-7e5d1576578c" name="Changes" comment="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Canvas.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Canvas.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Canvas.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/KeyboardPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/KeyboardPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Main.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MainFrame.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/MainFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/MainFrame.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MainFrame.java.bak" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MainFrame.java.old" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ModMatrixPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ModMatrixPanel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/OperatorPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/OperatorPanel.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/OscilloscopePanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/OscilloscopePanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Params.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Params.java.bak" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Synthesis.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,12 +44,12 @@
     &quot;assignee&quot;: &quot;mayusrg&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Goshaman/FMSynth&quot;,
-    &quot;accountId&quot;: &quot;9bb6005d-f835-42f7-ae74-b57c57355495&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Goshaman/FMSynth.git",
+    "accountId": "4db48806-92d4-4aaf-a29c-2e9907d34cd0"
   }
-}</component>
+}]]></component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>

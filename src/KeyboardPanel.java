@@ -1,90 +1,97 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
 
 public class KeyboardPanel extends JPanel {
     private MainFrame parent;
     private Synthesis synth;
-    // Note names for one octave
-    private String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    private java.util.ArrayList<JButton> whiteKeys;
-    private java.util.ArrayList<JButton> blackKeys;
-    private int whiteKeyCount = 22; // 37 keys = 22 white keys
+
+    // White key note names (no sharps)
+    private String[] whiteNoteNames = {"C", "D", "E", "F", "G", "A", "B"};
+    // Which white key indices have a black key to their right (C, D, F, G, A have sharps)
+    private boolean[] hasBlackKey = {true, true, false, true, true, true, false};
+
+    private ArrayList<PianoKey> whiteKeys;
+    private ArrayList<PianoKey> blackKeys;
+
+    private int startOctave = 2;  // Start from C2
+    private int numOctaves = 3;   // 3 octaves + 1 extra note = 22 white keys
 
     public KeyboardPanel(MainFrame pare, Synthesis synthesis) {
         parent = pare;
         synth = synthesis;
 
-        setBackground(new Color(45, 45, 50));
-        setLayout(null); // Use null layout for absolute positioning
+        setBackground(new Color(35, 35, 40));
+        setLayout(null);
 
-        whiteKeys = new java.util.ArrayList<>();
-        blackKeys = new java.util.ArrayList<>();
+        whiteKeys = new ArrayList<>();
+        blackKeys = new ArrayList<>();
 
         buildKeyboard();
 
-        // Add resize listener to update key positions
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent e) {
+        addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
                 updateKeyPositions();
             }
         });
     }
 
     private void buildKeyboard() {
-        int currentWhiteKey = 0;
+        int whiteKeyIndex = 0;
 
-        for (int i = 0; i < 37; i++) {
-            int noteIndex = i % 12;
-            int octave = 3 + (i / 12);
-            String noteName = noteNames[noteIndex] + octave;
+        // Build 3 full octaves + C of next octave (22 white keys total)
+        for (int octave = startOctave; octave <= startOctave + numOctaves; octave++) {
+            int notesInOctave = (octave == startOctave + numOctaves) ? 1 : 7; // Last octave only has C
 
-            // Calculate frequency
-            int midiNote = 48 + i; // C3 = 48
-            double freq = 440.0 * Math.pow(2, (midiNote - 69) / 12.0);
-            final double keyFreq = freq;
+            for (int noteInOctave = 0; noteInOctave < notesInOctave; noteInOctave++) {
+                // Create white key
+                String whiteName = whiteNoteNames[noteInOctave] + octave;
+                int midiNote = getMidiNote(whiteNoteNames[noteInOctave], octave);
+                double freq = midiToFreq(midiNote);
 
-            JButton key = new JButton(noteName);
-            key.setFont(new Font("SansSerif", Font.PLAIN, 9));
-            key.setFocusPainted(false);
+                PianoKey whiteKey = new PianoKey(whiteName, freq, false, whiteKeyIndex);
+                whiteKeys.add(whiteKey);
+                add(whiteKey);
 
-            boolean isBlack = noteNames[noteIndex].contains("#");
+                // Create black key if this white key has one
+                if (octave < startOctave + numOctaves && hasBlackKey[noteInOctave]) {
+                    String blackName = whiteNoteNames[noteInOctave] + "#" + octave;
+                    int blackMidi = midiNote + 1;
+                    double blackFreq = midiToFreq(blackMidi);
 
-            if (isBlack) {
-                // Black key
-                key.setBackground(Color.BLACK);
-                key.setForeground(Color.WHITE);
-                blackKeys.add(key);
-            } else {
-                // White key
-                key.setBackground(Color.WHITE);
-                key.setForeground(Color.BLACK);
-                whiteKeys.add(key);
-                currentWhiteKey++;
+                    PianoKey blackKey = new PianoKey(blackName, blackFreq, true, whiteKeyIndex);
+                    blackKeys.add(blackKey);
+                    add(blackKey);
+                }
+
+                whiteKeyIndex++;
             }
-
-            key.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-
-            // Store white key index for black key positioning
-            final int whiteKeyIdx = currentWhiteKey;
-            final boolean isBlackKey = isBlack;
-
-            key.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mousePressed(java.awt.event.MouseEvent e) {
-                    playNote(keyFreq);
-                }
-                public void mouseReleased(java.awt.event.MouseEvent e) {
-                    stopNote();
-                }
-            });
-
-            add(key);
         }
 
-        // Move black keys to front (on top)
-        for (JButton blackKey : blackKeys) {
-            remove(blackKey);
-            add(blackKey);
+        // Bring black keys to front
+        for (PianoKey blackKey : blackKeys) {
+            setComponentZOrder(blackKey, 0);
         }
+    }
+
+    private int getMidiNote(String noteName, int octave) {
+        // C0 = MIDI 12, so C2 = 36
+        int baseNote = 0;
+        switch (noteName) {
+            case "C": baseNote = 0; break;
+            case "D": baseNote = 2; break;
+            case "E": baseNote = 4; break;
+            case "F": baseNote = 5; break;
+            case "G": baseNote = 7; break;
+            case "A": baseNote = 9; break;
+            case "B": baseNote = 11; break;
+        }
+        return 12 + (octave * 12) + baseNote;
+    }
+
+    private double midiToFreq(int midiNote) {
+        return 440.0 * Math.pow(2, (midiNote - 69) / 12.0);
     }
 
     private void updateKeyPositions() {
@@ -93,41 +100,23 @@ public class KeyboardPanel extends JPanel {
 
         if (panelWidth <= 0 || panelHeight <= 0) return;
 
-        // Calculate key dimensions based on panel size
-        int whiteKeyWidth = panelWidth / whiteKeyCount;
+        int numWhiteKeys = whiteKeys.size();
+        int whiteKeyWidth = panelWidth / numWhiteKeys;
         int whiteKeyHeight = panelHeight;
-        int blackKeyWidth = (int)(whiteKeyWidth * 0.6);
-        int blackKeyHeight = (int)(panelHeight * 0.65);
+        int blackKeyWidth = (int)(whiteKeyWidth * 0.65);
+        int blackKeyHeight = (int)(panelHeight * 0.62);
 
         // Position white keys
         for (int i = 0; i < whiteKeys.size(); i++) {
-            JButton key = whiteKeys.get(i);
+            PianoKey key = whiteKeys.get(i);
             key.setBounds(i * whiteKeyWidth, 0, whiteKeyWidth, whiteKeyHeight);
         }
 
-        // Position black keys (between white keys)
-        int whiteKeyIdx = 0;
-        for (int i = 0; i < 37; i++) {
-            int noteIndex = i % 12;
-            boolean isBlack = noteNames[noteIndex].contains("#");
-
-            if (isBlack) {
-                // Find corresponding black key in list
-                int blackKeyIdx = 0;
-                for (int j = 0; j < i; j++) {
-                    if (noteNames[j % 12].contains("#")) {
-                        blackKeyIdx++;
-                    }
-                }
-
-                if (blackKeyIdx < blackKeys.size()) {
-                    JButton blackKey = blackKeys.get(blackKeyIdx);
-                    int xPos = (whiteKeyIdx * whiteKeyWidth) + whiteKeyWidth - (blackKeyWidth / 2);
-                    blackKey.setBounds(xPos, 0, blackKeyWidth, blackKeyHeight);
-                }
-            } else {
-                whiteKeyIdx++;
-            }
+        // Position black keys
+        for (PianoKey blackKey : blackKeys) {
+            int whiteIdx = blackKey.getWhiteKeyIndex();
+            int xPos = (whiteIdx + 1) * whiteKeyWidth - blackKeyWidth / 2;
+            blackKey.setBounds(xPos, 0, blackKeyWidth, blackKeyHeight);
         }
 
         revalidate();
@@ -141,5 +130,105 @@ public class KeyboardPanel extends JPanel {
 
     private void stopNote() {
         synth.stopSignal();
+    }
+
+    // Inner class for piano keys
+    private class PianoKey extends JPanel {
+        private String noteName;
+        private double frequency;
+        private boolean isBlack;
+        private int whiteKeyIndex;
+        private boolean pressed = false;
+
+        private Color whiteKeyColor = new Color(250, 250, 250);
+        private Color whiteKeyPressed = new Color(200, 200, 210);
+        private Color blackKeyColor = new Color(30, 30, 35);
+        private Color blackKeyPressed = new Color(60, 60, 70);
+
+        public PianoKey(String name, double freq, boolean black, int whiteIdx) {
+            noteName = name;
+            frequency = freq;
+            isBlack = black;
+            whiteKeyIndex = whiteIdx;
+
+            setOpaque(false);
+
+            addMouseListener(new MouseAdapter() {
+                public void mousePressed(MouseEvent e) {
+                    pressed = true;
+                    playNote(frequency);
+                    repaint();
+                }
+
+                public void mouseReleased(MouseEvent e) {
+                    pressed = false;
+                    stopNote();
+                    repaint();
+                }
+
+                public void mouseExited(MouseEvent e) {
+                    if (pressed) {
+                        pressed = false;
+                        stopNote();
+                        repaint();
+                    }
+                }
+            });
+        }
+
+        public int getWhiteKeyIndex() {
+            return whiteKeyIndex;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int w = getWidth();
+            int h = getHeight();
+
+            if (isBlack) {
+                // Black key with gradient
+                Color baseColor = pressed ? blackKeyPressed : blackKeyColor;
+                GradientPaint gradient = new GradientPaint(0, 0, baseColor.brighter(), 0, h, baseColor);
+                g2d.setPaint(gradient);
+                g2d.fillRoundRect(1, 0, w - 2, h - 4, 4, 4);
+
+                // Bottom shadow
+                g2d.setColor(new Color(15, 15, 20));
+                g2d.fillRoundRect(1, h - 8, w - 2, 6, 3, 3);
+
+                // Label
+                g2d.setColor(new Color(180, 180, 190));
+                g2d.setFont(new Font("SansSerif", Font.BOLD, 9));
+                FontMetrics fm = g2d.getFontMetrics();
+                String label = noteName.replace("#", "");  // Just show note letter
+                int textX = (w - fm.stringWidth(label)) / 2;
+                g2d.drawString(label, textX, h - 15);
+            } else {
+                // White key with gradient
+                Color baseColor = pressed ? whiteKeyPressed : whiteKeyColor;
+                GradientPaint gradient = new GradientPaint(0, 0, baseColor, 0, h, new Color(230, 230, 235));
+                g2d.setPaint(gradient);
+                g2d.fillRoundRect(1, 0, w - 2, h - 3, 3, 3);
+
+                // Border
+                g2d.setColor(new Color(180, 180, 185));
+                g2d.drawRoundRect(1, 0, w - 3, h - 3, 3, 3);
+
+                // Bottom edge shadow
+                g2d.setColor(new Color(200, 200, 205));
+                g2d.fillRect(1, h - 6, w - 2, 4);
+
+                // Label at bottom
+                g2d.setColor(new Color(100, 100, 110));
+                g2d.setFont(new Font("SansSerif", Font.PLAIN, 10));
+                FontMetrics fm = g2d.getFontMetrics();
+                int textX = (w - fm.stringWidth(noteName)) / 2;
+                g2d.drawString(noteName, textX, h - 10);
+            }
+        }
     }
 }
