@@ -59,7 +59,7 @@ public class MainFrame extends JFrame {
         //add operator button
         JButton addButton = new JButton("+ Operator");
         addButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        addButton.addActionListener(new java.awt.event.ActionListener() { // listens for button clicks
+        addButton.addActionListener(new java.awt.event.ActionListener() { // listens for button cl icks
             public void actionPerformed(java.awt.event.ActionEvent e) { //runs when button is clicked
                 if (operators.size() < 10) { //max operators = 10
                     addOperator();
