@@ -30,13 +30,14 @@ public class MainFrame extends JFrame {
         //for operators, going on the left
         operatorsPanel = new JPanel();
         operatorsPanel.setLayout(new BoxLayout(operatorsPanel, BoxLayout.Y_AXIS));
-        operatorsPanel.setBackground(Color.LIGHT_GRAY);
+        operatorsPanel.setBackground(new Color(45, 45, 50));
         //new lists
         operators = new ArrayList<Operator>();
         operatorPanels = new ArrayList<OperatorPanel>();
 
         //for mod matrix + oscilloscope
         JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(new Color(45, 45, 50));
         // mod matrix area, top part of right
         modMatrixPanel = new ModMatrixPanel(this);
         // oscilloscope area
@@ -52,13 +53,23 @@ public class MainFrame extends JFrame {
 
         //for 50 50 split
         JPanel topPanel = new JPanel(new GridLayout(1,2));
+        topPanel.setBackground(new Color(45, 45, 50));
 
         //button + scrollable operators
         JPanel operatorsWrapper = new JPanel(new BorderLayout());
+        operatorsWrapper.setBackground(new Color(45, 45, 50));
 
         //add operator button
         JButton addButton = new JButton("+ Operator");
         addButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        addButton.setBackground(new Color(60, 60, 65));
+        addButton.setForeground(new Color(200, 200, 210));
+        addButton.setFont(new Font("SansSerif", Font.BOLD, 12));
+        addButton.setFocusPainted(false);
+        addButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(80, 80, 85), 1),
+            BorderFactory.createEmptyBorder(8, 16, 8, 16)
+        ));
         addButton.addActionListener(new java.awt.event.ActionListener() { // listens for button cl icks
             public void actionPerformed(java.awt.event.ActionEvent e) { //runs when button is clicked
                 if (operators.size() < 10) { //max operators = 10
@@ -72,6 +83,9 @@ public class MainFrame extends JFrame {
         operatorsScroll = new JScrollPane(operatorsPanel);
         operatorsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         operatorsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        operatorsScroll.setBackground(new Color(45, 45, 50));
+        operatorsScroll.setBorder(null);
+        operatorsScroll.getViewport().setBackground(new Color(45, 45, 50));
         operatorsWrapper.add(operatorsScroll, BorderLayout.CENTER);
 
         //base = 3: always starts with 3 operators

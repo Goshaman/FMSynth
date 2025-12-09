@@ -4,10 +4,10 @@ import java.awt.*;
 public class OscilloscopePanel extends JPanel {
     private short[] samples;
     private Color waveColor = new Color(0, 255, 100);
-    private Color gridColor = new Color(80, 80, 80);
+    private Color gridColor = new Color(80, 80, 85);
 
     public OscilloscopePanel() {
-        setBackground(Color.BLACK);
+        setBackground(new Color(30, 30, 35));
         samples = new short[800];
     }
 

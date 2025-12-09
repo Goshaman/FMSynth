@@ -66,11 +66,14 @@ public class Canvas extends JPanel {
 
         super.paintComponent(g); // clear the panel
 
+        // Draw grid lines in dark mode
+        g2d.setColor(new Color(80, 80, 85));
         g2d.setStroke(new BasicStroke(1));
         g2d.drawLine(dS + 15, dS + 15, dS + 15, dS + panelHeight - 15);
         g2d.drawLine(dS + 15, dS + panelHeight / 2, dS + panelWidth - 15, dS + panelHeight / 2);
 
-        g2d.setColor(Color.BLUE);
+        // Draw waveform in bright color
+        g2d.setColor(new Color(100, 180, 255));
         int x_offset = dS + 15;
         int y_offset = dS + panelHeight / 2;
         double[] prev = {0,0};

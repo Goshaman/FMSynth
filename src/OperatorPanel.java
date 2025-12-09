@@ -14,9 +14,9 @@ public class OperatorPanel extends JPanel {
     public OperatorPanel(Operator op, MainFrame pare) {
         operator = op;
         parent = pare;
-        // Nicer colors
-        Color bgColor = new Color(220, 220, 220);
-        Color borderColor = new Color(180, 180, 180);
+        // Dark mode colors
+        Color bgColor = new Color(55, 55, 60);
+        Color borderColor = new Color(80, 80, 85);
 
         setBackground(bgColor);
         setBorder(BorderFactory.createCompoundBorder(
@@ -36,7 +36,7 @@ public class OperatorPanel extends JPanel {
 
         // Right side - canvas
         canvas = new Canvas("Operator");
-        canvas.setBackground(Color.WHITE);
+        canvas.setBackground(new Color(30, 30, 35));
         canvas.setBorder(new LineBorder(borderColor, 1));
         add(canvas, BorderLayout.CENTER);
 
@@ -52,6 +52,7 @@ public class OperatorPanel extends JPanel {
 
         JLabel nameLabel = new JLabel("Op " + operator.getId());
         nameLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        nameLabel.setForeground(new Color(200, 200, 210));
         leftPanel.add(nameLabel);
 
         // Carrier/Modulator toggle button
@@ -60,6 +61,9 @@ public class OperatorPanel extends JPanel {
         typeToggle.setFont(new Font("SansSerif", Font.BOLD, 10));
         typeToggle.setMargin(new Insets(0, 8, 0, 8));
         typeToggle.setFocusPainted(false);
+        typeToggle.setBackground(new Color(70, 70, 75));
+        typeToggle.setForeground(new Color(200, 200, 210));
+        typeToggle.setBorder(BorderFactory.createLineBorder(new Color(90, 90, 95), 1));
         typeToggle.setToolTipText(operator.isCarrier() ? "Carrier" : "Modulator");
         typeToggle.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -80,6 +84,9 @@ public class OperatorPanel extends JPanel {
         removeButton.setFont(new Font("SansSerif", Font.BOLD, 14));
         removeButton.setMargin(new Insets(0, 5, 0, 5));
         removeButton.setFocusPainted(false);
+        removeButton.setBackground(new Color(70, 70, 75));
+        removeButton.setForeground(new Color(200, 200, 210));
+        removeButton.setBorder(BorderFactory.createLineBorder(new Color(90, 90, 95), 1));
         removeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 parent.removeOperator(operator.getId());
@@ -173,11 +180,18 @@ public class OperatorPanel extends JPanel {
 
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        label.setForeground(new Color(180, 180, 190));
         label.setPreferredSize(new Dimension(35, 20));
         row.add(label, BorderLayout.WEST);
 
         JTextField field = new JTextField(fieldValue);
         field.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        field.setBackground(new Color(240, 242, 245));
+        field.setForeground(new Color(30, 30, 35));
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(70, 70, 75), 1),
+            BorderFactory.createEmptyBorder(2, 4, 2, 4)
+        ));
         row.add(field, BorderLayout.CENTER);
 
         return row;

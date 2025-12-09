@@ -14,7 +14,7 @@ public class KeyboardPanel extends JPanel {
         parent = pare;
         synth = synthesis;
 
-        setBackground(new Color(50, 50, 50));
+        setBackground(new Color(45, 45, 50));
         setLayout(null); // Use null layout for absolute positioning
 
         whiteKeys = new java.util.ArrayList<>();
