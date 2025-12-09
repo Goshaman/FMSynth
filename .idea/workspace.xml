@@ -6,11 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="d0452497-fad9-45b5-a144-7e5d1576578c" name="Changes" comment="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Canvas.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Canvas.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/KeyboardPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/KeyboardPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MainFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/MainFrame.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/OperatorPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/OperatorPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/OscilloscopePanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/OscilloscopePanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ModMatrixPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ModMatrixPanel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -215,7 +211,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765263651985</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;.idea/workspace.xml">
+      <option name="closed" value="true" />
+      <created>1765263931803</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1765263931803</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

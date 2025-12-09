@@ -19,7 +19,7 @@ public class ModMatrixPanel extends JPanel {
 
         JLabel titleLabel = new JLabel("Mod Matrix (Row Modulates Column)", SwingConstants.CENTER);
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
-        titleLabel.setForeground(new Color(200, 200, 210));
+        titleLabel.setForeground(new Color(100, 180, 255));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
         add(titleLabel, BorderLayout.NORTH);
 
@@ -69,7 +69,7 @@ public class ModMatrixPanel extends JPanel {
         for (int j = 0; j < numOps; j++) {
             JLabel colLabel = new JLabel("Op" + (j + 1), SwingConstants.CENTER);
             colLabel.setFont(new Font("SansSerif", Font.BOLD, 11));
-            colLabel.setForeground(new Color(180, 180, 190));
+            colLabel.setForeground(new Color(100, 180, 255));
             colLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 3, 0));
             gridPanel.add(colLabel);
         }
@@ -79,7 +79,7 @@ public class ModMatrixPanel extends JPanel {
             // Row header (From: Op1, Op2, ...)
             JLabel rowLabel = new JLabel("Op" + (i + 1), SwingConstants.CENTER);
             rowLabel.setFont(new Font("SansSerif", Font.BOLD, 11));
-            rowLabel.setForeground(new Color(180, 180, 190));
+            rowLabel.setForeground(new Color(100, 180, 255));
             rowLabel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
             gridPanel.add(rowLabel);
 
@@ -102,11 +102,11 @@ public class ModMatrixPanel extends JPanel {
                 // Disable diagonal (operator can't modulate itself)
                 if (i == j) {
                     field.setEnabled(false);
-                    field.setBackground(new Color(55, 55, 60));
-                    field.setForeground(new Color(100, 100, 105));
+                    field.setBackground(new Color(40, 40, 45));
+                    field.setForeground(new Color(80, 80, 85));
                 } else {
-                    field.setBackground(new Color(240, 242, 245));
-                    field.setForeground(new Color(30, 30, 35));
+                    field.setBackground(new Color(70, 70, 75));
+                    field.setForeground(new Color(100, 180, 255));
                 }
 
                 // Add listener to update synthesis when value changes
